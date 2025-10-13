@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "445910577659",
+    "project_id": "doctor-appointment-app-bedce",
+    "storage_bucket": "doctor-appointment-app-bedce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:445910577659:android:e620031472a6729b6b1b5e",
+        "android_client_info": {
+          "package_name": "com.example.doctor_appointment_appfront"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANOnxJdBeZJkpJ8uT4DoFUr53UDtLaqbc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
