@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "445910577659",
-    "project_id": "doctor-appointment-app-bedce",
-    "storage_bucket": "doctor-appointment-app-bedce.firebasestorage.app"
+    "project_number": "1034583981085",
+    "project_id": "citas-medicas-app-final",
+    "storage_bucket": "citas-medicas-app-final.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:445910577659:android:e620031472a6729b6b1b5e",
+        "mobilesdk_app_id": "1:1034583981085:android:688ce1ace4992fbb101af4",
         "android_client_info": {
           "package_name": "com.example.doctor_appointment_appfront"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyANOnxJdBeZJkpJ8uT4DoFUr53UDtLaqbc"
+          "current_key": "AIzaSyC8-hVhfb_DeE1alQQGjzKUgoqgHMJdKQc"
         }
       ],
       "services": {

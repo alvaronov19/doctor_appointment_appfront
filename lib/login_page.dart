@@ -141,12 +141,8 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       const Text("¿No tienes una cuenta?"),
                       TextButton(
-                        onPressed: () {
-                          // TODO: Asegúrate de tener una ruta para el registro en routes.dart
-                          // Navigator.pushNamed(context, Routes.register);
-                           ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Navegación a Registro no implementada.")),
-                            );
+                        onPressed: () { // <-- ✅ CÓDIGO CORREGIDO
+                          Navigator.pushNamed(context, Routes.register);
                         },
                         child: const Text('Regístrate aquí'),
                       ),

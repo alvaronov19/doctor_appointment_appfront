@@ -40,49 +40,48 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyA3OefewKdn4RMfwZO-BSAVTC26Vqv-tw8',
-    appId: '1:445910577659:web:2ec98dc1ec1faaa96b1b5e',
-    messagingSenderId: '445910577659',
-    projectId: 'doctor-appointment-app-bedce',
-    authDomain: 'doctor-appointment-app-bedce.firebaseapp.com',
-    storageBucket: 'doctor-appointment-app-bedce.firebasestorage.app',
-    measurementId: 'G-XTFGGCNK7V',
-  );
-
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyANOnxJdBeZJkpJ8uT4DoFUr53UDtLaqbc',
-    appId: '1:445910577659:android:e620031472a6729b6b1b5e',
-    messagingSenderId: '445910577659',
-    projectId: 'doctor-appointment-app-bedce',
-    storageBucket: 'doctor-appointment-app-bedce.firebasestorage.app',
+    apiKey: 'AIzaSyC8-hVhfb_DeE1alQQGjzKUgoqgHMJdKQc',
+    appId: '1:1034583981085:android:688ce1ace4992fbb101af4',
+    messagingSenderId: '1034583981085',
+    projectId: 'citas-medicas-app-final',
+    storageBucket: 'citas-medicas-app-final.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyA4SSzo0N6YhyjIC_O84O4ljtN6Zfml4GY',
-    appId: '1:445910577659:ios:ab0374ca508d7f2c6b1b5e',
-    messagingSenderId: '445910577659',
-    projectId: 'doctor-appointment-app-bedce',
-    storageBucket: 'doctor-appointment-app-bedce.firebasestorage.app',
+    apiKey: 'AIzaSyDCxVfap5lshIkkuoiYM_qcXtKROK68Puo',
+    appId: '1:1034583981085:ios:f1e8c4b2990e1fd2101af4',
+    messagingSenderId: '1034583981085',
+    projectId: 'citas-medicas-app-final',
+    storageBucket: 'citas-medicas-app-final.firebasestorage.app',
     iosBundleId: 'com.example.doctorAppointmentAppfront',
   );
 
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyDQKt-I0u7saMMWodiXL8njxFYJ0hJ6auo',
+    appId: '1:1034583981085:web:25167e4a6cd65aa1101af4',
+    messagingSenderId: '1034583981085',
+    projectId: 'citas-medicas-app-final',
+    authDomain: 'citas-medicas-app-final.firebaseapp.com',
+    storageBucket: 'citas-medicas-app-final.firebasestorage.app',
+  );
+
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyA4SSzo0N6YhyjIC_O84O4ljtN6Zfml4GY',
-    appId: '1:445910577659:ios:ab0374ca508d7f2c6b1b5e',
-    messagingSenderId: '445910577659',
-    projectId: 'doctor-appointment-app-bedce',
-    storageBucket: 'doctor-appointment-app-bedce.firebasestorage.app',
+    apiKey: 'AIzaSyDCxVfap5lshIkkuoiYM_qcXtKROK68Puo',
+    appId: '1:1034583981085:ios:f1e8c4b2990e1fd2101af4',
+    messagingSenderId: '1034583981085',
+    projectId: 'citas-medicas-app-final',
+    storageBucket: 'citas-medicas-app-final.firebasestorage.app',
     iosBundleId: 'com.example.doctorAppointmentAppfront',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyA3OefewKdn4RMfwZO-BSAVTC26Vqv-tw8',
-    appId: '1:445910577659:web:23f29e6b321547b16b1b5e',
-    messagingSenderId: '445910577659',
-    projectId: 'doctor-appointment-app-bedce',
-    authDomain: 'doctor-appointment-app-bedce.firebaseapp.com',
-    storageBucket: 'doctor-appointment-app-bedce.firebasestorage.app',
-    measurementId: 'G-LPLB20FP86',
+    apiKey: 'AIzaSyDQKt-I0u7saMMWodiXL8njxFYJ0hJ6auo',
+    appId: '1:1034583981085:web:806513d061748c4a101af4',
+    messagingSenderId: '1034583981085',
+    projectId: 'citas-medicas-app-final',
+    authDomain: 'citas-medicas-app-final.firebaseapp.com',
+    storageBucket: 'citas-medicas-app-final.firebasestorage.app',
   );
+
 }

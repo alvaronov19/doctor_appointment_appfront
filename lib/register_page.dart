@@ -25,7 +25,7 @@ class _RegisterPageState extends State<RegisterPage> {
     if (_formKey.currentState!.validate()) {
       if (passwordController.text.trim() !=
           confirmPasswordController.text.trim()) {
-        if(mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Las contraseñas no coinciden")),
           );
@@ -36,14 +36,19 @@ class _RegisterPageState extends State<RegisterPage> {
       setState(() => _isLoading = true);
 
       try {
+       
         UserCredential userCredential =
             await _auth.createUserWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
 
+       
         if (userCredential.user != null) {
-          await _firestore.collection('usuarios').doc(userCredential.user!.uid).set({
+          await _firestore
+              .collection('usuarios')
+              .doc(userCredential.user!.uid)
+              .set({
             'uid': userCredential.user!.uid,
             'email': emailController.text.trim(),
             'nombre': '',
@@ -54,29 +59,39 @@ class _RegisterPageState extends State<RegisterPage> {
           });
         }
 
+      
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Cuenta creada exitosamente")),
           );
-          Navigator.pop(context);
+          Navigator.pop(context); 
         }
+
       } on FirebaseAuthException catch (e) {
+        
         String message;
         if (e.code == 'email-already-in-use') {
           message = "El correo ya está registrado";
-        } else if (e.code == 'invalid-email') {
-          message = "Correo inválido";
-        } else if (e.code == 'weak-password') {
-          message = "La contraseña es muy débil";
         } else {
-          message = e.message ?? "Error desconocido";
+          message = e.message ?? "Error de autenticación";
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(message)),
           );
         }
+
+      } catch (e) {
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error al crear perfil: $e")),
+          );
+        }
+       
+        
       } finally {
+        
         if (mounted) {
           setState(() => _isLoading = false);
         }
