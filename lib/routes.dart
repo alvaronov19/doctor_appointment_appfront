@@ -6,6 +6,7 @@ import 'messages.dart';
 import 'info_page.dart';
 import 'profile_form_page.dart';
 import 'register_page.dart';
+import 'appointments_page.dart';
 
 class Routes {
   static const String login = '/login';
@@ -15,6 +16,7 @@ class Routes {
   static const String infoPage = '/info';
   static const String profileForm = '/profileForm';
   static const String register = '/register';
+  static const String appointments = '/appointments';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -26,11 +28,13 @@ class Routes {
         return MaterialPageRoute(builder: (_) => const ProfilePage());
       case messages:
         return MaterialPageRoute(builder: (_) => const MessagesPage());
-      case register:
-        return MaterialPageRoute(builder: (_) => const RegisterPage());
       case profileForm:
         return MaterialPageRoute(builder: (_) => const ProfileFormPage());
-      case infoPage: 
+      case register:
+        return MaterialPageRoute(builder: (_) => const RegisterPage());
+      case appointments:
+        return MaterialPageRoute(builder: (_) => const AppointmentsPage());
+      case infoPage:
         final args = settings.arguments as Map<String, String>;
         return MaterialPageRoute(
           builder: (_) => InfoPage(

@@ -140,7 +140,9 @@ class _HomePageState extends State<HomePage> {
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: InkWell(
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, Routes.appointments);
+              },
               borderRadius: BorderRadius.circular(16),
               child: const Padding(
                 padding: EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
