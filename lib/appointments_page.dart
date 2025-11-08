@@ -204,7 +204,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     });
   }
 
-  Future<void> _deleteAppointment(String citaId, String slotId) async {
+  Future<void> _deleteAppointmentWithConfirmation(
+      String citaId, String slotId) async {
     bool confirmDelete = await showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -224,16 +225,17 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
         false;
 
     if (confirmDelete) {
-      final WriteBatch batch = _firestore.batch();
-
-      final citaDoc = _firestore.collection('citas').doc(citaId);
-      batch.delete(citaDoc);
-
-      final slotDoc = _firestore.collection('disponibilidad_medicos').doc(slotId);
-      batch.update(slotDoc, {'esta_disponible': true});
-
-      await batch.commit();
+      await _executeDelete(citaId, slotId);
     }
+  }
+
+  Future<void> _executeDelete(String citaId, String slotId) async {
+    final WriteBatch batch = _firestore.batch();
+    final citaDoc = _firestore.collection('citas').doc(citaId);
+    batch.delete(citaDoc);
+    final slotDoc = _firestore.collection('disponibilidad_medicos').doc(slotId);
+    batch.update(slotDoc, {'esta_disponible': true});
+    await batch.commit();
   }
 
   @override
@@ -266,34 +268,71 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No tienes citas programadas.'));
-          }
 
-          final appointments = snapshot.data!.docs;
-
-          return ListView.builder(
-            itemCount: appointments.length,
-            itemBuilder: (context, index) {
-              final appointment = appointments[index];
-              final data = appointment.data() as Map<String, dynamic>;
-              final time = (data['fecha_hora_inicio'] as Timestamp).toDate();
-
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                child: ListTile(
-                  title: Text(data['motivo']),
-                  subtitle:
-                      Text(DateFormat('dd/MM/yyyy - hh:mm a').format(time)),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.redAccent),
-                    onPressed: () => _deleteAppointment(
-                        appointment.id, data['id_disponibilidad']),
-                  ),
-                  onTap: () => _showUpdateDialog(appointment),
-                ),
-              );
+          return RefreshIndicator(
+            onRefresh: () async {
+              setState(() {});
+              await Future.delayed(const Duration(seconds: 1));
             },
+            child: (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+                ? LayoutBuilder(
+                    builder: (context, constraints) => SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints:
+                            BoxConstraints(minHeight: constraints.maxHeight),
+                        child: const Center(
+                          child: Text('No tienes citas programadas.'),
+                        ),
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (context, index) {
+                      final appointment = snapshot.data!.docs[index];
+                      final data = appointment.data() as Map<String, dynamic>;
+                      final time =
+                          (data['fecha_hora_inicio'] as Timestamp).toDate();
+
+                      return Dismissible(
+                        key: Key(appointment.id),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (direction) {
+                          _executeDelete(
+                              appointment.id, data['id_disponibilidad']);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Cita cancelada')),
+                          );
+                        },
+                        background: Container(
+                          color: Colors.redAccent,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child:
+                              const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        child: Card(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          child: ListTile(
+                            title: Text(data['motivo']),
+                            subtitle: Text(
+                                DateFormat('dd/MM/yyyy - hh:mm a').format(time)),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete,
+                                  color: Colors.red),
+                              onPressed: () =>
+                                  _deleteAppointmentWithConfirmation(
+                                      appointment.id,
+                                      data['id_disponibilidad']),
+                            ),
+                            onTap: () => _showUpdateDialog(appointment),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           );
         },
       ),
