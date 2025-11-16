@@ -19,7 +19,44 @@ class _ProfileFormPageState extends State<ProfileFormPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final User? _currentUser = FirebaseAuth.instance.currentUser;
 
-  bool _isLoading = false;
+  bool _isLoading = true;
+  String? _selectedRole;
+  final List<String> _roles = ['Paciente', 'Médico'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    if (_currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    try {
+      final docSnapshot =
+          await _firestore.collection('usuarios').doc(_currentUser!.uid).get();
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data() as Map<String, dynamic>;
+        _nameController.text = data['nombre'] ?? '';
+        _ageController.text = data['edad'] ?? '';
+        _birthplaceController.text = data['lugar_nacimiento'] ?? '';
+        _ailmentsController.text = data['padecimientos'] ?? '';
+        _selectedRole = data['rol'] ?? 'Paciente';
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar datos: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -32,9 +69,7 @@ class _ProfileFormPageState extends State<ProfileFormPage> {
 
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate() && _currentUser != null) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       try {
         await _firestore.collection('usuarios').doc(_currentUser!.uid).update({
@@ -42,6 +77,7 @@ class _ProfileFormPageState extends State<ProfileFormPage> {
           'edad': _ageController.text.trim(),
           'lugar_nacimiento': _birthplaceController.text.trim(),
           'padecimientos': _ailmentsController.text.trim(),
+          'rol': _selectedRole,
         });
 
         if (mounted) {
@@ -58,9 +94,7 @@ class _ProfileFormPageState extends State<ProfileFormPage> {
         }
       } finally {
         if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
+          setState(() => _isLoading = false);
         }
       }
     }
@@ -73,41 +107,63 @@ class _ProfileFormPageState extends State<ProfileFormPage> {
         title: const Text('Editar Perfil'),
         backgroundColor: Colors.teal,
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(20.0),
-          children: [
-            _buildTextField(
-                _nameController, 'Nombre Completo', Icons.person_outline),
-            const SizedBox(height: 16),
-            _buildTextField(
-                _ageController, 'Edad', Icons.calendar_today_outlined,
-                keyboardType: TextInputType.number),
-            const SizedBox(height: 16),
-            _buildTextField(_birthplaceController, 'Lugar de Nacimiento',
-                Icons.public_outlined),
-            const SizedBox(height: 16),
-            _buildTextField(
-                _ailmentsController, 'Padecimientos', Icons.medical_services_outlined,
-                maxLines: 4),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _saveProfile,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(20.0),
+                children: [
+                  _buildTextField(
+                      _nameController, 'Nombre Completo', Icons.person_outline),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _selectedRole,
+                    decoration: const InputDecoration(
+                      labelText: 'Selecciona tu rol',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.account_circle_outlined),
+                    ),
+                    items: _roles.map((String role) {
+                      return DropdownMenuItem<String>(
+                        value: role,
+                        child: Text(role),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      setState(() {
+                        _selectedRole = newValue;
+                      });
+                    },
+                    validator: (value) =>
+                        value == null ? 'Por favor selecciona un rol' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                      _ageController, 'Edad', Icons.calendar_today_outlined,
+                      keyboardType: TextInputType.number),
+                  const SizedBox(height: 16),
+                  _buildTextField(_birthplaceController, 'Lugar de Nacimiento',
+                      Icons.public_outlined),
+                  const SizedBox(height: 16),
+                  _buildTextField(_ailmentsController, 'Padecimientos',
+                      Icons.medical_services_outlined,
+                      maxLines: 4),
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _saveProfile,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Guardar Información',
+                        style: TextStyle(fontSize: 16)),
+                  )
+                ],
               ),
-              child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Guardar Información',
-                      style: TextStyle(fontSize: 16)),
-            )
-          ],
-        ),
-      ),
+            ),
     );
   }
 

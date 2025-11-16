@@ -16,10 +16,11 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController confirmPasswordController =
       TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   bool _isLoading = false;
+  String? _selectedRole = 'Paciente';
+  final List<String> _roles = ['Paciente', 'Médico'];
 
   Future<void> _registerUser() async {
     if (_formKey.currentState!.validate()) {
@@ -32,18 +33,24 @@ class _RegisterPageState extends State<RegisterPage> {
         }
         return;
       }
+      if (_selectedRole == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Por favor selecciona un rol")),
+          );
+        }
+        return;
+      }
 
       setState(() => _isLoading = true);
 
       try {
-       
         UserCredential userCredential =
             await _auth.createUserWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
 
-       
         if (userCredential.user != null) {
           await _firestore
               .collection('usuarios')
@@ -51,6 +58,7 @@ class _RegisterPageState extends State<RegisterPage> {
               .set({
             'uid': userCredential.user!.uid,
             'email': emailController.text.trim(),
+            'rol': _selectedRole,
             'nombre': '',
             'edad': '',
             'lugar_nacimiento': '',
@@ -59,16 +67,13 @@ class _RegisterPageState extends State<RegisterPage> {
           });
         }
 
-      
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Cuenta creada exitosamente")),
           );
-          Navigator.pop(context); 
+          Navigator.pop(context);
         }
-
       } on FirebaseAuthException catch (e) {
-        
         String message;
         if (e.code == 'email-already-in-use') {
           message = "El correo ya está registrado";
@@ -80,18 +85,13 @@ class _RegisterPageState extends State<RegisterPage> {
             SnackBar(content: Text(message)),
           );
         }
-
       } catch (e) {
-        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Error al crear perfil: $e")),
           );
         }
-       
-        
       } finally {
-        
         if (mounted) {
           setState(() => _isLoading = false);
         }
@@ -115,7 +115,6 @@ class _RegisterPageState extends State<RegisterPage> {
             children: [
               const SizedBox(height: 40),
               const Icon(Icons.person_add, size: 80, color: Colors.teal),
-              const SizedBox(height: 10),
               const Center(
                 child: Text(
                   "Registro de usuario",
@@ -125,17 +124,13 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 40),
               TextFormField(
                 controller: emailController,
-                keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
                   labelText: "Correo electrónico",
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.email_outlined),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Por favor ingresa tu correo";
-                  }
-                  if (!value.contains("@")) {
+                  if (value == null || value.isEmpty || !value.contains('@')) {
                     return "Correo inválido";
                   }
                   return null;
@@ -151,10 +146,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   prefixIcon: Icon(Icons.lock_outline),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Por favor ingresa una contraseña";
-                  }
-                  if (value.length < 6) {
+                  if (value == null || value.isEmpty || value.length < 6) {
                     return "Debe tener al menos 6 caracteres";
                   }
                   return null;
@@ -170,11 +162,33 @@ class _RegisterPageState extends State<RegisterPage> {
                   prefixIcon: Icon(Icons.lock),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Confirma tu contraseña";
+                  if (value != passwordController.text) {
+                    return "Las contraseñas no coinciden";
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedRole,
+                decoration: const InputDecoration(
+                  labelText: 'Selecciona tu rol',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.account_circle_outlined),
+                ),
+                items: _roles.map((String role) {
+                  return DropdownMenuItem<String>(
+                    value: role,
+                    child: Text(role),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedRole = newValue;
+                  });
+                },
+                validator: (value) =>
+                    value == null ? 'Por favor selecciona un rol' : null,
               ),
               const SizedBox(height: 20),
               SizedBox(

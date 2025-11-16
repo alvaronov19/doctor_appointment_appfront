@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'routes.dart';
 
 class HomePage extends StatefulWidget {
@@ -11,7 +12,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-  final User? currentUser = FirebaseAuth.instance.currentUser;
+  final User? _currentUser = FirebaseAuth.instance.currentUser;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final List<Map<String, dynamic>> specialists = [
     {'name': 'Cardiología', 'icon': Icons.favorite_border},
@@ -34,18 +36,6 @@ class _HomePageState extends State<HomePage> {
       'rating': '4.8',
       'imgUrl': 'https://via.placeholder.com/150/FF0000/FFFFFF?Text=Dra.G'
     },
-    {
-      'name': 'Dr. Luis Vega',
-      'spec': 'Pediatra',
-      'rating': '4.9',
-      'imgUrl': 'https://via.placeholder.com/150/00FF00/FFFFFF?Text=Dr.V'
-    },
-    {
-      'name': 'Dra. María Sol',
-      'spec': 'Neuróloga',
-      'rating': '4.7',
-      'imgUrl': 'https://via.placeholder.com/150/FFFF00/000000?Text=Dra.S'
-    },
   ];
 
   void _onItemTapped(int index) {
@@ -54,52 +44,88 @@ class _HomePageState extends State<HomePage> {
     });
 
     switch (index) {
-    case 0:
-      break;
-    case 1:
-      Navigator.pushNamed(context, Routes.messages); 
-      break;
-    case 2:
-      Navigator.pushNamed(context, Routes.profile);
-      break;
+      case 0:
+        break;
+      case 1:
+        Navigator.pushNamed(context, Routes.messages);
+        break;
+      case 2:
+        Navigator.pushNamed(context, Routes.profile);
+        break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    String userName = currentUser?.email?.split('@')[0] ?? 'Usuario';
-    userName = userName[0].toUpperCase() + userName.substring(1);
-
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Configuración'),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.teal,
-        onTap: _onItemTapped,
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20.0),
-          children: [
-            _buildWelcomeHeader(userName, context),
-            const SizedBox(height: 30),
-            _buildActionCards(),
-            const SizedBox(height: 30),
-            _buildSectionTitle('Especialistas'),
-            const SizedBox(height: 16),
-            _buildSpecialistsList(),
-            const SizedBox(height: 30),
-            _buildSectionTitle('Doctores Populares'),
-            const SizedBox(height: 16),
-            _buildPopularDoctorsGrid(),
-          ],
+    if (_currentUser == null) {
+      return Scaffold(
+        body: Center(
+          child: TextButton(
+            child: const Text('Error de autenticación. Ir a Login.'),
+            onPressed: () {
+              Navigator.pushReplacementNamed(context, Routes.login);
+            },
+          ),
         ),
-      ),
+      );
+    }
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream:
+          _firestore.collection('usuarios').doc(_currentUser!.uid).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
+        }
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const Scaffold(
+              body: Center(child: Text('No se encontró el perfil de usuario.')));
+        }
+
+        final userData = snapshot.data!.data() as Map<String, dynamic>;
+        final userRole = userData['rol'] ?? 'Paciente';
+        String userName =
+            userData['nombre'] ?? _currentUser!.email?.split('@')[0] ?? 'Usuario';
+        userName = userName.isNotEmpty
+            ? userName
+            : _currentUser!.email?.split('@')[0] ?? 'Usuario';
+        userName = userName[0].toUpperCase() + userName.substring(1);
+
+        return Scaffold(
+          backgroundColor: Colors.grey[100],
+          bottomNavigationBar: BottomNavigationBar(
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.message), label: 'Mensajes'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.settings), label: 'Configuración'),
+            ],
+            currentIndex: _selectedIndex,
+            selectedItemColor: Colors.teal,
+            onTap: _onItemTapped,
+          ),
+          body: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.all(20.0),
+              children: [
+                _buildWelcomeHeader(userName, context),
+                const SizedBox(height: 30),
+                _buildActionCards(userRole),
+                const SizedBox(height: 30),
+                _buildSectionTitle('Especialistas'),
+                const SizedBox(height: 16),
+                _buildSpecialistsList(),
+                const SizedBox(height: 30),
+                _buildSectionTitle('Doctores Populares'),
+                const SizedBox(height: 16),
+                _buildPopularDoctorsGrid(),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -122,81 +148,127 @@ class _HomePageState extends State<HomePage> {
           onTap: () => Navigator.pushNamed(context, Routes.profile),
           child: const CircleAvatar(
             radius: 25,
-            backgroundImage:
-                NetworkImage('https://via.placeholder.com/150/AAAAAA/FFFFFF?Text=User'),
+            backgroundImage: NetworkImage(
+                'https://via.placeholder.com/150/AAAAAA/FFFFFF?Text=User'),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildActionCards() {
-    return Row(
-      children: [
-        Expanded(
-          child: Card(
-            elevation: 2,
-            color: Colors.deepPurple[400],
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: InkWell(
-              onTap: () {
-                Navigator.pushNamed(context, Routes.appointments);
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
-                child: Column(
-                  children: [
-                    Icon(Icons.add_circle_outline,
-                        color: Colors.white, size: 32),
-                    SizedBox(height: 12),
-                    Text('Agendar Cita',
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 4),
-                    Text('Realiza una cita',
-                        style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  ],
+  Widget _buildActionCards(String userRole) {
+    if (userRole == 'Paciente') {
+      return Row(
+        children: [
+          Expanded(
+            child: Card(
+              elevation: 2,
+              color: Colors.deepPurple[400],
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              child: InkWell(
+                onTap: () {
+                  Navigator.pushNamed(context, Routes.appointments);
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: const Padding(
+                  padding:
+                      EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+                  child: Column(
+                    children: [
+                      Icon(Icons.add_circle_outline,
+                          color: Colors.white, size: 32),
+                      SizedBox(height: 12),
+                      Text('Agendar Cita',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
+                      SizedBox(height: 4),
+                      Text('Realiza una cita',
+                          style:
+                              TextStyle(color: Colors.white70, fontSize: 12)),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Card(
-            elevation: 2,
-            color: Colors.white,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: InkWell(
-              onTap: () {},
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
-                child: Column(
-                  children: [
-                    Icon(Icons.lightbulb_outline,
-                        color: Colors.teal[400], size: 32),
-                    const SizedBox(height: 12),
-                    Text('Consejos',
-                        style: TextStyle(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text('Consejos médicos',
-                        style:
-                            TextStyle(color: Colors.grey[600], fontSize: 12)),
-                  ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Card(
+              elevation: 2,
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              child: InkWell(
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Función de consejos no implementada.')));
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+                  child: Column(
+                    children: [
+                      Icon(Icons.lightbulb_outline,
+                          color: Colors.teal[400], size: 32),
+                      const SizedBox(height: 12),
+                      Text('Consejos',
+                          style: TextStyle(
+                              color: Colors.black87,
+                              fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text('Consejos médicos',
+                          style:
+                              TextStyle(color: Colors.grey[600], fontSize: 12)),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    } else {
+      return Row(
+        children: [
+          Expanded(
+            child: Card(
+              elevation: 2,
+              color: Colors.teal[700],
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              child: InkWell(
+                onTap: () {
+                  Navigator.pushNamed(context, Routes.dashboard);
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: const Padding(
+                  padding:
+                      EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+                  child: Column(
+                    children: [
+                      Icon(Icons.dashboard_outlined,
+                          color: Colors.white, size: 32),
+                      SizedBox(height: 12),
+                      Text('Ver Dashboard',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
+                      SizedBox(height: 4),
+                      Text('Estadísticas de citas',
+                          style:
+                              TextStyle(color: Colors.white70, fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
   }
 
   Widget _buildSectionTitle(String title) {
